@@ -70,7 +70,7 @@ while ($complexPassword -ne 1)
 
 # Register resource providers
 Write-Host "Registering resource providers...";
-$provider_list = "Microsoft.Synapse", "Microsoft.Sql", "Microsoft.Storage", "Microsoft.Compute"
+$provider_list = "Microsoft.Synapse", "Microsoft.Sql", "Microsoft.Storage", "Microsoft.Compute", "Microsoft.Databricks"
 foreach ($provider in $provider_list){
     $result = Register-AzResourceProvider -ProviderNamespace $provider
     $status = $result.RegistrationState
@@ -80,18 +80,19 @@ foreach ($provider in $provider_list){
 # Generate unique random suffix
 [string]$suffix =  -join ((48..57) + (97..122) | Get-Random -Count 7 | % {[char]$_})
 Write-Host "Your randomly-generated suffix for Azure resources is $suffix"
-$resourceGroupName = "dp203-$suffix"
+$resourceGroupName = "rg-automated-$suffix"
 
 # Choose a random region
 Write-Host "Finding an available region. This may take several minutes...";
 $delay = 0, 30, 60, 90, 120 | Get-Random
 Start-Sleep -Seconds $delay # random delay to stagger requests from multi-student classes
-$preferred_list = "australiaeast","centralus","southcentralus","eastus2","northeurope","southeastasia","uksouth","westeurope","westus","westus2"
+$preferred_list = "eastus","eastus2","canadaeast","canadacentral"
 $locations = Get-AzLocation | Where-Object {
     $_.Providers -contains "Microsoft.Synapse" -and
     $_.Providers -contains "Microsoft.Sql" -and
     $_.Providers -contains "Microsoft.Storage" -and
     $_.Providers -contains "Microsoft.Compute" -and
+    $_.Providers -contains "Microsoft.Databricks" -and
     $_.Location -in $preferred_list
 }
 $max_index = $locations.Count - 1
@@ -132,7 +133,7 @@ Write-Host "Creating $resourceGroupName resource group in $Region ..."
 New-AzResourceGroup -Name $resourceGroupName -Location $Region | Out-Null
 
 # Create Synapse workspace
-$synapseWorkspace = "synapse$suffix"
+$workspace = "workspace$suffix"
 $dataLakeAccountName = "datalake$suffix"
 $sparkPool = "spark$suffix"
 $sqlDatabaseName = "sql$suffix"
